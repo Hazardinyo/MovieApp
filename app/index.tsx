@@ -1,22 +1,34 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Image, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, SafeAreaView, StatusBar, Image } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as tf from "@tensorflow/tfjs";
 import * as mobilenet from "@tensorflow-models/mobilenet";
 import axios from "axios";
 import OpenAI from "openai";
+import { Stack } from 'expo-router';
+import * as Location from 'expo-location';
+import { MaterialIcons, Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
+import PantsIcon from './components/PantsIcon';
 
-const IndexScreen = () => {
+const Home = () => {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [clothingInfo, setClothingInfo] = useState<string | null>(null);
   const [outfitSuggestion, setOutfitSuggestion] = useState<string | null>(null);
-  const [weather, setWeather] = useState<number | null>(null);
+  const [weather, setWeather] = useState<number | null>(25);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [location, setLocation] = useState('Loading...');
 
   useEffect(() => {
     (async () => {
-      await tf.ready();
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setLocation('Permission denied');
+        return;
+      }
+
+      let location = await Location.getCurrentPositionAsync({});
+      setLocation('Baku, Azerbaijan'); // Bu hissəni real API ilə əvəz edəcəyik
     })();
   }, []);
 
@@ -112,30 +124,93 @@ const IndexScreen = () => {
   };
   
   return (
-    <View className="flex-1 items-center justify-center bg-gray-900">
-      <TouchableOpacity className="px-4 py-2 bg-blue-500 rounded-2xl my-2 opacity-80" onPress={() => pickImage(false)}>
-        <Text className="text-white text-lg">Şəkil seç</Text>
-      </TouchableOpacity>
-      <TouchableOpacity className="px-4 py-2 bg-green-500 rounded-2xl my-2 opacity-80" onPress={() => pickImage(true)}>
-        <Text className="text-white text-lg">Kamera aç</Text>
-      </TouchableOpacity>
-
-      {imageUri ? (
-        <Image source={{ uri: imageUri }} className="w-48 h-48 mt-4 rounded-lg border-2 border-gray-600" />
-      ) : null}
-
-      {clothingInfo && <Text className="text-lg text-white mt-2">Paltar tipi: {clothingInfo}</Text>}
-      {weather && <Text className="text-lg text-white">Hava temperaturu: {weather}°C</Text>}
-      {outfitSuggestion && <Text className="text-lg font-bold text-yellow-400 mt-2">{outfitSuggestion}</Text>}
-
-      {feedback && (
-        <View className="mt-4 p-4 bg-gray-800 rounded-lg w-4/5 border border-yellow-400">
-          <Text className="text-lg font-bold text-yellow-400">Yapay Zəka Feedback:</Text>
-          <Text className="text-lg text-white mt-2">{feedback}</Text>
+    <SafeAreaView className="flex-1 bg-white">
+      <StatusBar barStyle="dark-content" />
+      <View className="flex-1 px-4">
+        {/* Header */}
+        <View className="flex-row justify-between items-center py-4">
+          <TouchableOpacity className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center">
+            <Ionicons name="person" size={24} color="gray" />
+          </TouchableOpacity>
+          <Text className="text-base font-medium">{location}</Text>
         </View>
-      )}
-    </View>
+
+        {/* Qarderob Button */}
+        <TouchableOpacity className="bg-gray-100 rounded-xl p-6 mt-3">
+          <View className="flex-row items-center">
+            <MaterialIcons name="door-front" size={30} color="black" />
+            <Text className="text-2xl font-bold ml-2 fontSize-20 ">Qarderob</Text>
+          </View>
+        </TouchableOpacity>
+
+        {/* Weather Info */}
+        <View className="bg-blue-400 rounded-xl p-4 mt-4">
+          <View className="flex-row items-center justify-between">
+            <View className="flex-row items-center">
+              <MaterialIcons name="wb-sunny" size={24} color="white" />
+              <Text className="text-white text-lg ml-2">Günəşli</Text>
+            </View>
+            <Text className="text-white text-xl font-bold">+{weather}°C</Text>
+          </View>
+        </View>
+
+        {/* Outfit Combination */}
+        <View className="flex-1 mt-4">
+          <View className="flex-row justify-between items-center mb-4">
+            <TouchableOpacity>
+              <MaterialIcons name="refresh" size={30} color="black" />
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <MaterialIcons name="watch" size={30} color="black" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Clothes Display */}
+          <View className="flex-1 items-center space-y-10">
+            {/* Hat */}
+            <View className="w-24 h-24 bg-gray-100 rounded-xl items-center justify-center">
+              <Image 
+                source={{uri: ''}}
+                className="w-full h-full rounded-xl"
+                style={{display: 'none'}}
+              />
+              <MaterialIcons name="face" size={40} color="gray" />
+            </View>
+            
+            {/* Shirt */}
+            <View className="w-40 h-40 mt-3 bg-gray-100 rounded-xl items-center justify-center">
+              <Image 
+                source={{uri: ''}}
+                className="w-full h-full rounded-xl"
+                style={{display: 'none'}}
+              />
+              <Ionicons name="shirt-outline" size={56} color="gray" />
+            </View>
+
+            {/* Pants */}
+            <View className="w-40 h-40 bg-gray-100 rounded-xl items-center justify-center">
+              <Image 
+                source={{uri: ''}}
+                className="w-full h-full rounded-xl"
+                style={{display: 'none'}}
+              />
+              <PantsIcon size={56} color="gray" />
+            </View>
+
+            {/* Shoes */}
+            <View className="w-24 h-24 mt-3 bg-gray-100 rounded-xl items-center justify-center">
+              <Image 
+                source={{uri: ''}}
+                className="w-full h-full rounded-xl"
+                style={{display: 'none'}}
+              />
+              <MaterialCommunityIcons name="shoe-sneaker" size={40} color="gray" />
+            </View>
+          </View>
+        </View>
+      </View>
+    </SafeAreaView>
   );
 };
 
-export default IndexScreen;
+export default Home;
